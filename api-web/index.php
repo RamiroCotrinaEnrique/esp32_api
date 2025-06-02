@@ -1,80 +1,79 @@
 <?php
-include 'config/conexion.php'; 
-
-if ($conexion->connect_error) {
-    die("Connection no establecida: " . $conexion->connect_error);
-}
-
 header("Content-Type: application/json");
-$metodo = $_SERVER['REQUEST_METHOD'];
+require_once 'conexion.php'; // Archivo con la conexión a la base de datos
 
-$ruta = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'/';
+// Permitir solicitudes desde cualquier origen (CORS)
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type");
 
-$buscarId = explode('/', $ruta);
-$id = ($ruta!=='/')?end($buscarId):null;
+// Obtener los datos del cuerpo de la solicitud en formato JSON
+$json = file_get_contents('php://input');
+$data = json_decode($json, true);
 
-//print_r($metodo);
-$tabla =null;
-
-switch ($metodo) {
-    case 'GET':   
-        //echo "Consulta registro GET";
-        $tabla = "sensorDTH11";
-        metodoGET($conexion,$tabla);
-        break;
-
-    case 'POST':
-        //echo "Consulta registro POST";
-        $tabla = "sensorDTH11";
-        metodoPOST($conexion,$tabla);
-        break;
-
-    case 'PUT':
-        echo "Consulta registro PUT";
-        break;
-
-    case 'DELETE':
-        //echo "Consulta registro DELETE";
-        $tabla = "sensorDTH11";
-        metodoDELETE($conexion,$id,$tabla);
-        break;
-
-    default:
-        echo "MÉTODO NO PERMITIDO";
-        break;
+// Validar que los datos requeridos estén presentes
+if (!isset($data['temperatura']) || !isset($data['humedad']) || !isset($data['gas'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Datos incompletos']);
+    exit;
 }
 
-function metodoGET($conexion,$tabla){
-    $sql = "SELECT * FROM ". $tabla;
-    $resultado = $conexion->query($sql);
+try {
+    // Iniciar transacción para asegurar que ambas inserciones se completen
+    $conn->beginTransaction();
 
-    if ($resultado) {
-        $datos = array();
-        while ($fila = $resultado->fetch_assoc()) {
-            $datos[] = $fila;
-        }
-        echo json_encode($datos);
-    }
+    // Insertar datos en la tabla sensorDTH11
+    $stmtDHT11 = $conn->prepare("
+        INSERT INTO sensorDTH11 (
+            dth11_temperatura, 
+            dth11_humedad,
+            dth11_fecha_update
+        ) VALUES (
+            :temperatura, 
+            :humedad,
+            NOW()
+        )
+    ");
+    
+    $stmtDHT11->execute([
+        ':temperatura' => $data['temperatura'],
+        ':humedad' => $data['humedad']
+    ]);
+
+    // Insertar datos en la tabla sensorMQ7
+    $stmtMQ7 = $conn->prepare("
+        INSERT INTO sensorMQ7 (
+            mq7_gas,
+            mq7_fecha_update
+        ) VALUES (
+            :gas,
+            NOW()
+        )
+    ");
+    
+    $stmtMQ7->execute([
+        ':gas' => $data['gas']
+    ]);
+
+    // Confirmar la transacción
+    $conn->commit();
+
+    // Respuesta exitosa
+    http_response_code(201);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Datos guardados correctamente',
+        'dht11_id' => $conn->lastInsertId()
+    ]);
+
+} catch (PDOException $e) {
+    // Revertir la transacción en caso de error
+    $conn->rollBack();
+    
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Error al guardar los datos',
+        'details' => $e->getMessage()
+    ]);
 }
-
-function metodoPOST($conexion,$tabla){
-    $dato = json_decode(file_get_contents('php://input'),true);
-    $temperatura = $dato['temperatura'];
-    $humedad = $dato['humedad'];
-    //print_r($temperatura);
-    //print_r($humedad);
-    $sql = "INSERT INTO ". $tabla . " (dth11_temperatura, dth11_humedad) VALUES ('$temperatura', '$humedad')";
-    $resultado = $conexion->query($sql);
-
-    if ($resultado) {
-        $dato['id'] = $conexion->insert_id;
-        echo json_encode($dato);
-    }else{
-        echo json_encode(array('error'=>'Error al registrar datos'));
-    }
-
-}
-
-function metodoDELETE($conexion,$id,$tabla){
-    echo "El ide s : " .$id;
-}
+?>

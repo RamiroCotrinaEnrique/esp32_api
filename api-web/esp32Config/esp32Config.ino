@@ -5,7 +5,7 @@
 
 const char* ssid = "Red A52s";
 const char* password = "12345678";
-const char* api_url = "https://ucv.vcodesystems.com/api/post.php";
+const char* api_url = "https://ucv.vcodesystems.com/api-web/index.php";
 
 DHT11 dht11(18);
 int ledVerde = 26;
@@ -96,5 +96,5 @@ void loop() {
     Serial.println("WiFi no conectado");
   }
 
-  delay(1000);
+  delay(10000);
 }
