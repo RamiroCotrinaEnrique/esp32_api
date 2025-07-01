@@ -1,3 +1,4 @@
+
 CREATE DATABASE iot;
 
 CREATE TABLE sensorDTH11 (
@@ -18,3 +19,4 @@ CREATE TABLE sensorMQ7 (
     mq7_fecha_delete datetime,
     PRIMARY KEY (mq7_id)
 ) ;
+ 

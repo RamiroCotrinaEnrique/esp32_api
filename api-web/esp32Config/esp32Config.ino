@@ -1,7 +1,8 @@
+// Instalar esta librería
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <DHT11.h>
-#include <ArduinoJson.h>  // Necesitarás instalar esta librería
+#include <ArduinoJson.h>  
 
 const char* ssid = "Red A52s";
 const char* password = "12345678";
@@ -10,7 +11,7 @@ const char* api_url = "https://ucv.vcodesystems.com/api-web/index.php";
 DHT11 dht11(18);
 int ledVerde = 26;
 int ledRojo = 27;
-int sensorMQ7 = 18;
+int sensorMQ7 = 25;
 
 void setup() {
   Serial.begin(115200);
