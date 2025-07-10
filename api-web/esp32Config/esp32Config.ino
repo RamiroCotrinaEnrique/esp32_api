@@ -11,7 +11,7 @@ const char* api_url = "https://ucv.vcodesystems.com/api-web/index.php";
 DHT11 dht11(18);
 int ledVerde = 26;
 int ledRojo = 27;
-int sensorMQ7 = 25;
+int sensorMQ7 = 34;
 
 void setup() {
   Serial.begin(115200);
