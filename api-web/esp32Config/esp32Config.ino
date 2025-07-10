@@ -4,8 +4,11 @@
 #include <DHT11.h>
 #include <ArduinoJson.h>  
 
-const char* ssid = "Red A52s";
-const char* password = "12345678";
+//const char* ssid = "Red A52s";
+//const char* password = "12345678";
+
+const char* ssid = "AVILA";
+const char* password = "46185953";
 const char* api_url = "https://ucv.vcodesystems.com/api-web/index.php";
 
 DHT11 dht11(18);
@@ -28,6 +31,7 @@ void setup() {
 }
 
 void loop() {
+  
   int temperatura = 0;
   int humedad = 0;
   int sensorMQ7read = analogRead(sensorMQ7);
